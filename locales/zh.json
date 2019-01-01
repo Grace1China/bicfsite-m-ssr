@@ -1,0 +1,10 @@
+{
+    "player":{
+        "teacher":"讲员",
+        "series":"系列",
+        "scripture":"经文",
+        "date":"日期",
+        "duration":"时长", 
+        "hits":"点播次数"
+    }
+}

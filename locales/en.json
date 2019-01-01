@@ -1,0 +1,10 @@
+{
+    "player":{
+        "teacher":"by",
+        "series":"series",
+        "scripture":"scripture",
+        "date":"date",
+        "duration":"duration", 
+        "hits":"hits"
+    }
+}

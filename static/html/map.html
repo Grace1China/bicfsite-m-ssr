@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html style="font-size: 12px">
+
+<head>
+    <link rel="stylesheet" href="./fonts/stylesheet.css">
+
+</head>
+
+<body style="margin:0;padding: 0;">
+
+    <div id="locationMap">
+        <div></div>
+    </div>
+
+    <script type='text/javascript'>
+        /**
+         * JavaScript Get URL Parameter
+         * 
+         * @param String prop The specific URL parameter you want to retreive the value for
+         * @return String|Object If prop is provided a string value is returned, otherwise an object of all properties is returned
+         */
+        function getUrlParams(prop) {
+            var params = {};
+            var search = decodeURI(window.location.href.slice(window.location.href.indexOf('?') + 1));
+            var definitions = search.split('&');
+
+            definitions.forEach(function (val, key) {
+                var parts = val.split('=', 2);
+                params[parts[0]] = parts[1];
+            });
+
+            return (prop && prop in params) ? params[prop] : params;
+        }
+
+        function getParamInput() {
+            var param = window.paramFromParent;
+            return param;
+        }
+
+        var theMap = null;
+        function loadMapScenario() {
+            theMap = new Microsoft.Maps.Map(document.getElementById('locationMap'), {
+                /* No need to set credentials if already passed in URL */
+                center: new Microsoft.Maps.Location(39.916042, 116.392483),
+                mapTypeId: Microsoft.Maps.MapTypeId.grayscale,
+                zoom: 11,
+                customMapStyle: {
+                    elements: {
+                        area: { fillColor: '#b6e591' },
+                        water: { fillColor: '#75cff0' },
+                        tollRoad: { fillColor: '#a964f4', strokeColor: '#a964f4' },
+                        arterialRoad: { fillColor: '#ffffff', strokeColor: '#d7dae7' },
+                        road: { fillColor: '#ffa35a', strokeColor: '#ff9c4f' },
+                        street: { fillColor: '#ffffff', strokeColor: '#ffffff' },
+                        transit: { fillColor: '#000000' }
+                    },
+                    settings: {
+                        landColor: '#efe9e1'
+                    }
+                }
+            }
+            );
+
+            setLocation(undefined);
+        }
+
+        function setImage(toLocation, theCampus) {
+            var img;
+            var divWrap;
+            // Define custom constructor for the overlay 
+            function TopographicOverlay(bounds, image) {
+                this.bounds = bounds;
+                this.image = image;
+            }
+            // set prototype to sub-class CustomOverlay
+            TopographicOverlay.prototype = new Microsoft.Maps.CustomOverlay();
+            // implement the onAdd method to set up DOM element, and use setHtmlElement bind it with the overlay
+            TopographicOverlay.prototype.onAdd = function () {
+                divWrap = document.getElementById('mapdivwrap');
+                if (divWrap == undefined) {
+                    divWrap = document.createElement('div');
+                    divWrap.id = "mapdivwrap";
+                    divWrap.style.width = '24rem';//(bottomRight.x - topLeft.x) + 'px';
+                    divWrap.style.height = '40rem';//(bottomRight.x - topLeft.x) + 'px';
+                    divWrap.style.left = '0px';//topLeft.x + 'px';
+                    divWrap.style.top = '0px';//topLeft.y + 'px';
+                    divWrap.style.position = 'absolute';
+                    divWrap.style.margin = '1rem';
+                    //divWrap.style.border = '1px solid green';
+                    divWrap.style.borderRadius = '10PX';
+                    divWrap.style.overflow = 'hidden';
+                    divWrap.style.display = "flex";
+                    divWrap.style.justifyContent = "flex-start";
+                    divWrap.style.flexDirection = "column";
+                }
+                else {
+                    divWrap.removeChild(divWrap.childNodes[0]);
+                    divWrap.removeChild(divWrap.childNodes[0]);
+
+                }
+
+
+                img = document.createElement('img');
+
+                img.src = this.image;
+                img.id = 'topographicOverlay';
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                //img.style.position = 'absolute';
+                img.style.borderTopLeftRadius = '10PX';
+                img.style.borderTopRightRadius = '10PX';
+
+                divWrap.appendChild(img);
+
+
+                divTitle = document.createElement('div');
+                divTitle.style.fontFamily = 'MyriadPro-light';
+                divTitle.style.fontSize = '14px';
+                divTitle.style.borderBottomLeftRadius = '10PX';//border-bottom
+                divTitle.style.borderBottomRightRadius = '10PX';
+                divTitle.innerText = toLocation;
+                divTitle.style.bottom = '0px';
+                divTitle.style.padding = '10px 15px';
+
+                //divTitle.style.position = 'absolute';
+                //divTitle.style.width = '100%';
+                divTitle.style.background = '-webkit-gradient(linear, 0% 50%, 100% 50%, color-stop(0, #00a76b), color-stop(0.5357, #399767), color-stop(1, #388a62))';
+                divTitle.style.color = '#fff';
+
+                divWrap.appendChild(divTitle);
+
+                this.setHtmlElement(divWrap);
+            };
+            // implement the onLoad method to perform custom operations of rendering the DOM element
+            TopographicOverlay.prototype.onLoad = function () {
+                repositionOverlay();
+                Microsoft.Maps.Events.addHandler(theMap, 'viewchange', function () {
+                    repositionOverlay();
+                });
+            };
+            var bounds = Microsoft.Maps.LocationRect.fromCorners(new Microsoft.Maps.Location(theCampus.loc.lat + 0.1, theCampus.loc.long - 0.1), new Microsoft.Maps.Location(theCampus.loc.lat, theCampus.loc.long));
+            var imageSrc = './images/zgcChurch.jpg';
+            // create an instance of the defined custom overlay 
+            var overlay = new TopographicOverlay(bounds, imageSrc);
+            // now we're ready to insert this custom overlay into map layers
+            theMap.layers.insert(overlay);
+            function repositionOverlay() {
+                var topLeft = theMap.tryLocationToPixel(bounds.getNorthwest(), Microsoft.Maps.PixelReference.control);
+                var bottomRight = theMap.tryLocationToPixel(bounds.getSoutheast(), Microsoft.Maps.PixelReference.control);
+                /*if (topLeft && bottomRight) {
+                    img.style.left = '0px';//topLeft.x + 'px';
+                    img.style.top = '0px';//topLeft.y + 'px';
+                    img.style.width = '27rem';//(bottomRight.x - topLeft.x) + 'px';
+                    img.style.height = '18rem';//(bottomRight.x - topLeft.x) + 'px';
+                    img.style.height = (bottomRight.y - topLeft.y) + 'px';
+                    img.style.border = '2px solid green'
+                }*/
+            }
+        }
+
+        function setLocation(toChurch) {
+
+            var chJson =
+                [{
+                    "loc": { "name": "BICF 21st Century", "lat": 39.952196, "long": 116.473521 },
+                    "churches": [{ "name": "City Church", "url": "http://www.bicf.org/city-church" }
+                        , { "name": "IMS", "url": "http://www.bicf.org/ims" }
+                        , { "name": "AOM", "url": "http://www.bicf.org/aom" }]
+                },
+
+                {
+                    "loc": { "name": "BICF ZGC", "lat": 39.997000, "long": 116.343485 },
+                    "churches": [{ "name": "ZGC", "url": "http://www.bicf.org/zgc" }
+                        , { "name": "ZGC Evening", "url": "http://www.bicf.org/zgc-evening" }
+                    ]
+                }
+                    ,
+
+                {
+                    "loc": { "name": "BICF CBD", "lat": 39.917775, "long": 116.453311 },
+                    "churches": [{ "name": "English", "url": "http://www.bicf.org/CBD-English" }
+                        , { "name": "French", "url": "http://www.bicf.org/CBD-French" }
+                    ]
+                }
+                    ,
+
+                {
+                    "loc": { "name": "BICF Yi Zhuang", "lat": 39.790125, "long": 116.510576 },
+                    "churches": [{ "name": "English", "url": "http://www.bicf.org/YiZhuang-English" }
+                        , { "name": "French", "url": "http://www.bicf.org/YiZhuang-French" }
+                    ]
+                }
+
+                ];
+
+
+            var pushpins = [];
+            theMap.entities.clear();
+
+            var churchListTemplate = '<a  href="{url}" >{name}</a><br>';
+
+            //toCampus = getParamInput();
+            var arrLocations = [];
+            for (var i = 0; i < chJson.length; i++) {
+
+                if (toChurch == undefined || toChurch.Campus.toUpperCase() == chJson[i].loc.name.toUpperCase()) {
+
+                    if (toChurch != undefined) {
+                        setImage(toChurch.Location, chJson[i])
+                    }
+
+                    var shape = new Microsoft.Maps.Location(chJson[i].loc.lat, chJson[i].loc.long);
+                    var pushpin = new Microsoft.Maps.Pushpin(shape, { icon: './images/churchicon.png' });
+                    theMap.entities.push(pushpin);
+                    var churchList = "";
+                    for (var j = 0; j < chJson[i].churches.length; j++) {
+                        churchList = churchList + churchListTemplate.replace('{url}', chJson[i].churches[j].url).replace('{name}', chJson[i].churches[j].name)
+                    }
+
+                    arrLocations.push(shape)
+
+                    pushpin.metadata = {
+                        title: chJson[i].loc.name,
+                        description: churchList
+                    };
+                    pushpins.push(pushpin);
+                }
+            }
+
+            var bestView = Microsoft.Maps.LocationRect.fromLocations(arrLocations);
+
+            var infoboxTemplate = '<div id="infoboxText" style="background-color:White; transform: translateY(-50%);border-style:solid; border-width:medium; border-color:DarkOrange; min-height:100px; width: 240px; "><b id="infoboxTitle" style="position: absolute; top: 10px; left: 10px; width: 220px; ">{title}</b><div id="infoboxDescription"  style="position: absolute; top: 30px; left: 10px; width: 220px; ">{description}</div></div>';
+
+
+
+            // for (var i = 0; i < pushpins.length; i++) {
+            //     var pushpin = pushpins[i];
+            //     //Store some metadata with the pushpin
+            //     var infobox = new Microsoft.Maps.Infobox(pushpin.getLocation(), {
+            //     htmlContent: infoboxTemplate.replace('{title}', 'myTitle').replace('{description}', 'myDescription')
+            //     , visible: false });
+
+            //     infobox.setMap(theMap);
+
+
+            //     Microsoft.Maps.Events.addHandler(pushpin, 'click', function (args) {
+            //         infobox.setOptions({
+            //             location: args.target.getLocation(),
+            //             title: args.target.metadata.title,
+            //             description: args.target.metadata.description,
+            //             htmlContent: infoboxTemplate.replace('{title}', args.target.metadata.title).replace('{description}', args.target.metadata.description ),
+            //             visible: true
+            //         });
+            //     });
+            // }
+
+            // Microsoft.Maps.Events.addHandler(theMap, 'click',  function (e) {  infobox.setOptions({visible: false})});
+            theMap.entities.push(pushpins);
+
+
+            if (toChurch == undefined) {
+                setTimeout((function () {
+                    theMap.setView({
+                        bounds: bestView,
+                        padding: '200px'
+                    }
+                    );
+                }).bind(this), 1000);
+
+            } else {
+                setTimeout((function () {
+                    theMap.setView({
+                        center: new Microsoft.Maps.Location(arrLocations[0].latitude, arrLocations[0].longitude),
+                        // mapTypeId: Microsoft.Maps.MapTypeId.grayscale,
+                        zoom: 12,
+                    }
+                    );
+                }).bind(this), 1000);
+            }
+
+
+        }
+    </script>
+    <script type='text/javascript'>
+        let params = new URL(window.location).searchParams;
+        var lang = params.get('lang'); // "1"
+        if (lang == "zh") {
+            lang = 'zh'
+        } else {
+            lang = 'en'
+        }
+
+        document.write(`<script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?key=AuDZOrQOl3cVvWXVDXJstudeqWcBAIvic-U4uFkBhz1vvvFvKvgp2pfqGjN-fewb&callback=loadMapScenario&setLang=${lang}' async defer><\/script>`);
+
+    </script>
+
+</body>
+
+</html>

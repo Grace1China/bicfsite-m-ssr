@@ -1,0 +1,44 @@
+@font-face {
+    font-family: 'MyriadPro-Semibold';
+    src: url('MyriadPro-Semibold.woff2') format('woff2'),
+        url('MyriadPro-Semibold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+}
+
+
+@font-face {
+    font-family: 'MyriadPro-Bold';
+    src: url('MyriadPro-Bold.woff2') format('woff2'),
+        url('MyriadPro-Bold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'MyriadPro-Regular';
+    src: url('MyriadPro-Regular.woff2') format('woff2'),
+        url('MyriadPro-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'MyriadPro-Light';
+    src:url('MyriadPro-Light.otf') format('truetype');
+
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SourceHanSansHWSC-Bold';
+    src:url('WechatSourceHanSansHWSC-Bold.otf') format('truetype');
+
+    font-weight: 300;
+    font-style: normal;
+}
+
+
+
+
